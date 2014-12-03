@@ -19,4 +19,12 @@ public class Message {
     public String getPayload() {
         return payload;
     }
+
+    @Override
+    public String toString() {
+        return "Message{" +
+                "offsets=" + offsets +
+                ", payload='" + payload + '\'' +
+                '}';
+    }
 }

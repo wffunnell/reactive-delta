@@ -1,10 +1,12 @@
 package delta
 
-import org.reactivestreams.Publisher
-import org.scalatest.{Matchers, FlatSpec}
-import rx.{Subscription, RxReactiveStreams, Subscriber}
+import java.util
 
-import scala.collection.parallel
+import org.reactivestreams.Publisher
+import org.scalatest.{FlatSpec, Matchers}
+import rx.functions.Func2
+import rx.{RxReactiveStreams, Subscriber, Subscription}
+
 
 class RxDeltaClientSpec extends FlatSpec with Matchers {
 
@@ -17,6 +19,14 @@ class RxDeltaClientSpec extends FlatSpec with Matchers {
     val subscribe: Subscription = RxReactiveStreams
       .toObservable(consume)
       .take(10)
+      .scan(new Func2[Message, Message, Message] {
+      override def call(t1: Message, t2: Message): Message = {
+        val map: util.HashMap[Integer, Integer] = new util.HashMap[Integer, Integer]
+        map.putAll(t1.getOffsets)
+        map.putAll(t2.getOffsets)
+        new Message(map, t2.getPayload)
+      }
+    })
       .subscribe(CountingObserver)
 
     subscribe.unsubscribe()
@@ -28,7 +38,6 @@ class RxDeltaClientSpec extends FlatSpec with Matchers {
 
 object CountingObserver extends Subscriber[Message] {
   var counter = 0
-
 
   override def onStart(): Unit = request(1)
 
